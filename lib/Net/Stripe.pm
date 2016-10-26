@@ -480,11 +480,17 @@ L<https://stripe.com/docs/api#create_card>
 
 =item * card - L<Net::Stripe::Card> or HashRef
 
+=item * source - token obtained from Stripe.js
+
 =back
+
+Either card or source is required.
 
 Returns a L<Net::Stripe::Card>
 
-  $stripe->create_card(customer => $customer, card => $card);
+  $stripe->post_card(customer => $customer, card => $card);
+
+  $stripe->post_card(customer => $customer, source => $token);
 
 =card_method get_cards
 
@@ -537,7 +543,7 @@ Cards: {
         return $self->_get("customers/$customer/cards/$card_id");
     }
 
-    method get_cards(Net::Stripe::Customer|Str $customer,
+    method get_cards(Net::Stripe::Customer|Str :$customer,
                      HashRef :$created?,
                      Str :$ending_before?,
                      Int :$limit?,
@@ -546,8 +552,8 @@ Cards: {
             $customer = $customer->id;
         }
 
-        $self->_get_collections('cards',
-                                id => $customer,
+        $self->_get_collections("customers/$customer/sources",
+                                object => 'card',
                                 created => $created,
                                 ending_before => $ending_before,
                                 limit => $limit,
@@ -555,9 +561,14 @@ Cards: {
     }
 
     method post_card(Net::Stripe::Customer|Str :$customer,
-                     HashRef|Net::Stripe::Card :$card) {
+                     HashRef|Net::Stripe::Card :$card,
+                     Str :$source) {
         if (ref($customer)) {
             $customer = $customer->id;
+        }
+        # Update card with a token
+        if (defined($source)) {
+          return $self->_post("customers/$customer/sources", { source => $source });
         }
         # Update the card.
         if (ref($card) eq 'Net::Stripe::Card' && $card->id) {
@@ -1455,6 +1466,9 @@ sub _get_collections {
     }
     if (my $c = $args{customer}) {
         push @path_args, "customer=$c";
+    }
+    if (my $obj = $args{object}) {
+        push @path_args, "object=$obj";
     }
 
     # example: $Stripe->get_charges( 'count' => 100, 'created' => { 'gte' => 1397663381 } );
