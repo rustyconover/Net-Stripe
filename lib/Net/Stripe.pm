@@ -555,9 +555,14 @@ Cards: {
     }
 
     method post_card(Net::Stripe::Customer|Str :$customer,
-                     HashRef|Net::Stripe::Card :$card) {
+                     HashRef|Net::Stripe::Card :$card,
+                     Str :$source) {
         if (ref($customer)) {
             $customer = $customer->id;
+        }
+        # Update card with a token
+        if (defined($source)) {
+          return $self->_post("customers/$customer/sources", { source => $source });
         }
         # Update the card.
         if (ref($card) eq 'Net::Stripe::Card' && $card->id) {
