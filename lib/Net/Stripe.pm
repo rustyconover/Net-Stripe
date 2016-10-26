@@ -480,11 +480,17 @@ L<https://stripe.com/docs/api#create_card>
 
 =item * card - L<Net::Stripe::Card> or HashRef
 
+=item * source - token obtained from Stripe.js
+
 =back
+
+Either card or source is required.
 
 Returns a L<Net::Stripe::Card>
 
-  $stripe->create_card(customer => $customer, card => $card);
+  $stripe->post_card(customer => $customer, card => $card);
+
+  $stripe->post_card(customer => $customer, source => $token);
 
 =card_method get_cards
 
